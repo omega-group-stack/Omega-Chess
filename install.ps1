@@ -15,11 +15,40 @@ function Stop-WithMessage([string]$Message) {
   exit 1
 }
 
+function Add-DiscoveredToolToPath([string]$Name, [string[]]$Patterns) {
+  if (Get-Command $Name -ErrorAction SilentlyContinue) { return }
+
+  foreach ($Pattern in $Patterns) {
+    $Candidate = Get-ChildItem -Path $Pattern -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($Candidate) {
+      $Directory = Split-Path $Candidate.FullName -Parent
+      $env:Path = "$Directory;$env:Path"
+      Write-Host "Detected $Name in $Directory" -ForegroundColor DarkGreen
+      return
+    }
+  }
+}
+
 function Require-Command([string]$Name, [string]$InstallHint) {
   if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
     Stop-WithMessage "$Name was not found. $InstallHint"
   }
 }
+
+Add-DiscoveredToolToPath 'php' @(
+  'C:\laragon\bin\php\*\php.exe',
+  'C:\tools\php\php.exe',
+  "$env:ProgramFiles\PHP\*\php.exe"
+)
+Add-DiscoveredToolToPath 'composer' @(
+  'C:\laragon\bin\composer\composer.bat',
+  "$env:APPDATA\ComposerSetup\bin\composer.bat",
+  "$env:ProgramData\ComposerSetup\bin\composer.bat"
+)
+Add-DiscoveredToolToPath 'node' @(
+  'C:\laragon\bin\nodejs\*\node.exe',
+  "$env:ProgramFiles\nodejs\node.exe"
+)
 
 Write-Host '========================================' -ForegroundColor Green
 Write-Host '        Omega Chess Local Installer' -ForegroundColor Green
