@@ -18,22 +18,36 @@ php --version
 composer --version
 ```
 
-## نصب خودکار
+## نصب با یک کلیک
 
-در ریشه پروژه PowerShell اجرا کنید:
+در Windows روی فایل زیر دوبار کلیک کنید:
+
+```text
+install.bat
+```
+
+یا در PowerShell ریشه پروژه اجرا کنید:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\install.ps1
+```
+
+نصب‌کننده PHP، Composer و Node.js را بررسی می‌کند، SQLite را می‌سازد، وابستگی‌ها را نصب می‌کند، Migrationها را اجرا می‌کند و در پایان برای اجرای API و frontend از شما سؤال می‌کند.
+
+اگر فقط نصب می‌خواهید و نمی‌خواهید سرورها اجرا شوند:
+
+```powershell
+.\install.ps1 -NoStart
+```
+
+## نصب دستی
+
+اگر نمی‌خواهید از installer استفاده کنید:
 
 ```powershell
 .\setup.ps1 install
 ```
-
-این دستور:
-
-1. وابستگی‌های Laravel را نصب می‌کند.
-2. فایل `.env` را می‌سازد.
-3. دیتابیس SQLite را ایجاد می‌کند.
-4. کلید Laravel را تولید می‌کند.
-5. Migrationها را اجرا می‌کند.
-6. وابستگی‌های Next.js را نصب می‌کند.
 
 ## اجرای پروژه
 

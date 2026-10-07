@@ -25,11 +25,16 @@ Install:
 - Composer 2+
 - Git
 
-Open PowerShell in the repository root and run:
+The easiest option is to double-click `install.bat`.
+
+Or open PowerShell in the repository root and run:
 
 ```powershell
-.\setup.ps1 install
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\install.ps1
 ```
+
+The installer checks PHP, Composer and Node.js, prepares SQLite, installs all dependencies, and can start both local servers for you.
 
 Start the API in PowerShell window one:
 
