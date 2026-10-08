@@ -76,6 +76,7 @@ if ($LASTEXITCODE -ne 0) { throw 'The local project setup failed.' }
 Write-Host "`nInstallation completed successfully." -ForegroundColor Green
 Write-Host 'Frontend: http://localhost:3000'
 Write-Host 'API:      http://localhost:8000'
+Write-Host 'Reverb:   ws://127.0.0.1:8080'
 Write-Host 'Health:   http://localhost:8000/api/health'
 
 if ($NoStart) {
@@ -85,11 +86,11 @@ if ($NoStart) {
 
 $start = Read-Host "`nStart the API and frontend now? [Y/n]"
 if ($start -and $start.Trim().ToLower() -ne 'y' -and $start.Trim() -ne '') {
-  Write-Host 'Installation finished. Start later with .\setup.ps1 api and .\setup.ps1 web.' -ForegroundColor Yellow
+  Write-Host 'Installation finished. Start later with .\setup.ps1 api, .\setup.ps1 realtime and .\setup.ps1 web.' -ForegroundColor Yellow
   exit 0
 }
 
-Write-Host "`nStarting API and frontend in two new PowerShell windows..." -ForegroundColor Cyan
+Write-Host "`nStarting API, Reverb and frontend in three new PowerShell windows..." -ForegroundColor Cyan
 Start-Process powershell.exe -WorkingDirectory $Api -ArgumentList @('-NoExit', '-Command', 'php artisan serve --host=127.0.0.1 --port=8000')
 Start-Process powershell.exe -WorkingDirectory $Api -ArgumentList @('-NoExit', '-Command', 'php artisan reverb:start --host=127.0.0.1 --port=8080')
 Start-Process powershell.exe -WorkingDirectory $Web -ArgumentList @('-NoExit', '-Command', 'npm run dev -- --hostname 127.0.0.1 --port 3000')
