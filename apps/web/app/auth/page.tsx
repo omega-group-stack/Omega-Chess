@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { apiUrl } from '../../lib/api';
+import { apiUrl, readApiResponse } from '../../lib/api';
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'register' | 'login'>('register');
@@ -23,10 +23,10 @@ export default function AuthPage() {
         : { email, password };
       const response = await fetch(apiUrl(`/auth/${mode}`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const payload = await response.json();
+      const payload = await readApiResponse(response);
       if (!response.ok) {
         const validation = payload.errors ? Object.values(payload.errors).flat().join(' ') : '';
         throw new Error(validation || payload.message || 'Authentication failed.');

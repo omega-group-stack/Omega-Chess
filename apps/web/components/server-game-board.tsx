@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { apiUrl } from '../lib/api';
+import { apiUrl, readApiResponse } from '../lib/api';
 import { subscribeToGame } from '../lib/realtime';
 
 type Move = { from: string; to: string; san: string; ply: number };
@@ -39,7 +39,7 @@ export function ServerGameBoard() {
     const refresh = async () => {
       const response = await fetch(apiUrl(`/games/${game.id}/events?since=${game.version ?? -1}`), { headers: { Authorization: `Bearer ${token}` } });
       if (response.ok) {
-        const payload = await response.json();
+        const payload = await readApiResponse(response);
         if (payload.changed) setGame(payload.game);
       }
     };
@@ -62,7 +62,7 @@ export function ServerGameBoard() {
         ? { username, email, password, password_confirmation: password }
         : { email, password };
       const response = await fetch(apiUrl(`/auth/${mode}`), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const payload = await response.json();
+      const payload = await readApiResponse(response);
       if (!response.ok) throw new Error(payload.message || 'Authentication failed.');
       setToken(payload.token);
       setMessage(mode === 'register' ? 'Account created. Now create a server game.' : 'Signed in. Now create a server game.');
@@ -75,7 +75,7 @@ export function ServerGameBoard() {
     setLoading(true);
     try {
       const response = await fetch(apiUrl('/games'), { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'practice' }) });
-      const payload = await response.json();
+      const payload = await readApiResponse(response);
       if (!response.ok) throw new Error(payload.message || 'Could not create a game.');
       setGame(payload.game); setSelected(null); setMessage('Game created. Select a piece to make a legal server-checked move.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not create a game.'); }
@@ -85,7 +85,7 @@ export function ServerGameBoard() {
   async function action(path: string) {
     if (!game || !token) return;
     const response = await fetch(apiUrl(`/games/${game.id}/${path}`), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-    const payload = await response.json();
+    const payload = await readApiResponse(response);
     if (!response.ok) { setMessage(payload.message || 'The server rejected this action.'); return; }
     setGame(payload.game);
   }
@@ -110,7 +110,7 @@ export function ServerGameBoard() {
     setLoading(true);
     try {
       const response = await fetch(apiUrl(`/games/${game.id}/moves`), { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: selected, to: square }) });
-      const payload = await response.json();
+      const payload = await readApiResponse(response);
       if (!response.ok) throw new Error(payload.message || 'The server rejected this move.');
       setGame(payload.game); setSelected(null); setMessage(`Move ${payload.move.san} accepted by Laravel.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : 'The server rejected this move.'); }

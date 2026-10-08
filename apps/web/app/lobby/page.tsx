@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { apiUrl } from '../../lib/api';
+import { apiUrl, readApiResponse } from '../../lib/api';
 
 type Seek = { id: number; username: string; mode: string; color: string; time_control: string; initial_time_ms: number | null; increment_ms: number; };
 
@@ -18,7 +18,7 @@ export default function LobbyPage() {
     if (!token) return;
     const load = async () => {
       const response = await fetch(apiUrl('/lobby'), { headers: { Authorization: `Bearer ${token}` } });
-      if (response.ok) setSeeks((await response.json()).seeks);
+      if (response.ok) setSeeks((await readApiResponse(response)).seeks);
     };
     load();
     const timer = window.setInterval(load, 3000);
@@ -34,7 +34,7 @@ export default function LobbyPage() {
 
   async function joinSeek(id: number) {
     const response = await fetch(apiUrl(`/lobby/seeks/${id}/join`), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-    const payload = await response.json();
+    const payload = await readApiResponse(response);
     if (response.ok) setMessage(`Matched game ${payload.game_id}. Open /play and use the game API token.`); else setMessage(payload.message || 'Could not join seek.');
   }
 
