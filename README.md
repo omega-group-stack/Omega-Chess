@@ -5,7 +5,7 @@ Omega Chess is being built as an independent, phased chess platform with an HTML
 Phase 1 is a local-first foundation:
 
 - Next.js + TypeScript frontend running on Node.js
-- Laravel 11 API running on PHP
+- Laravel 12 API running on PHP
 - SQLite by default for zero-setup local development
 - MySQL connection support for the next deployment step
 - Sanctum token authentication: register, login, me, logout
