@@ -132,3 +132,5 @@ GET  /api/games/{game}/pgn
 The `/play` screen accepts a Sanctum token and sends every move to Laravel for validation. The local Phase 2 database remains SQLite.
 
 Phase 3 guide: [`docs/PHASE-3-LIVE.fa.md`](docs/PHASE-3-LIVE.fa.md).
+
+Phase 4 guide: [`docs/PHASE-4-REALTIME.fa.md`](docs/PHASE-4-REALTIME.fa.md). Laravel Reverb, WebSocket broadcasting and Echo fallback are now included.

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('install', 'start', 'api', 'web', 'test', 'help')]
+  [ValidateSet('install', 'start', 'api', 'web', 'realtime', 'test', 'help')]
   [string]$Command = 'install'
 )
 
@@ -45,14 +45,21 @@ function Start-Web {
   try { npm run dev -- --hostname 127.0.0.1 --port 3000 } finally { Pop-Location }
 }
 
+function Start-Realtime {
+  Push-Location $Api
+  try { php artisan reverb:start --host=127.0.0.1 --port=8080 } finally { Pop-Location }
+}
+
 switch ($Command) {
   'install' { Install-Local }
   'api' { Require-Command 'php'; Start-Api }
   'web' { Require-Command 'npm'; Start-Web }
+  'realtime' { Require-Command 'php'; Start-Realtime }
   'start' {
-    Write-Host 'Open two PowerShell windows and run:'
+    Write-Host 'Open three PowerShell windows and run:'
     Write-Host '  .\setup.ps1 api'
     Write-Host '  .\setup.ps1 web'
+    Write-Host '  .\setup.ps1 realtime'
     Write-Host 'Then visit http://localhost:3000'
   }
   'test' {

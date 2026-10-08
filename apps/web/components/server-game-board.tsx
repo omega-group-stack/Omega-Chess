@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '../lib/api';
+import { subscribeToGame } from '../lib/realtime';
 
 type Move = { from: string; to: string; san: string; ply: number };
 type Game = { id: string; status: string; turn: 'w' | 'b'; result: string | null; fen: string; version?: number; clock?: { white: number | null; black: number | null; turn: 'w' | 'b'; increment_ms: number }; draw_offered_by?: number | null; state: { legal_moves: Record<string, string[]> }; moves: Move[] };
@@ -32,14 +33,17 @@ export function ServerGameBoard() {
   useEffect(() => { if (token) window.localStorage.setItem('omega_token', token); }, [token]);
   useEffect(() => {
     if (!game || !token) return;
-    const timer = window.setInterval(async () => {
+    const refresh = async () => {
       const response = await fetch(apiUrl(`/games/${game.id}/events?since=${game.version ?? -1}`), { headers: { Authorization: `Bearer ${token}` } });
       if (response.ok) {
         const payload = await response.json();
         if (payload.changed) setGame(payload.game);
       }
-    }, 2000);
-    return () => window.clearInterval(timer);
+    };
+    let unsubscribe: () => void = () => undefined;
+    try { unsubscribe = subscribeToGame(game.id, token, refresh); } catch { /* polling remains the fallback */ }
+    const timer = window.setInterval(refresh, 4000);
+    return () => { unsubscribe(); window.clearInterval(timer); };
   }, [game?.id, game?.version, token]);
   const board = useMemo(() => boardFromFen(game?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'), [game?.fen]);
   const legalTargets = selected && game ? game.state.legal_moves[selected] || [] : [];

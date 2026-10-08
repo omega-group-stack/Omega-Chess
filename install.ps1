@@ -91,6 +91,7 @@ if ($start -and $start.Trim().ToLower() -ne 'y' -and $start.Trim() -ne '') {
 
 Write-Host "`nStarting API and frontend in two new PowerShell windows..." -ForegroundColor Cyan
 Start-Process powershell.exe -WorkingDirectory $Api -ArgumentList @('-NoExit', '-Command', 'php artisan serve --host=127.0.0.1 --port=8000')
+Start-Process powershell.exe -WorkingDirectory $Api -ArgumentList @('-NoExit', '-Command', 'php artisan reverb:start --host=127.0.0.1 --port=8080')
 Start-Process powershell.exe -WorkingDirectory $Web -ArgumentList @('-NoExit', '-Command', 'npm run dev -- --hostname 127.0.0.1 --port 3000')
 Start-Sleep -Seconds 3
 Start-Process 'http://localhost:3000'

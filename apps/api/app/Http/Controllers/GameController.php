@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Domain\Chess\ChessException;
 use App\Domain\Chess\ChessGame;
+use App\Events\GameUpdated;
 use App\Models\Game;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class GameController extends Controller
 {
@@ -112,6 +114,7 @@ class GameController extends Controller
         }
 
         if ($move === null) return response()->json(['message' => 'The clock has expired.', 'game' => $this->payload($locked)], 409);
+        $this->announce($locked);
         return response()->json(['game' => $this->payload($locked), 'move' => $move]);
     }
 
@@ -120,6 +123,7 @@ class GameController extends Controller
         $this->authorizeGame($request, $game);
         $color = $this->playerColor($request, $game);
         $game->update(['status' => 'resigned', 'winner' => $color === 'w' ? 'b' : 'w', 'result' => $color === 'w' ? '0-1' : '1-0', 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -128,6 +132,7 @@ class GameController extends Controller
         $this->authorizeGame($request, $game);
         abort_unless(in_array($game->status, ['active', 'check'], true), 409, 'This game is finished.');
         $game->update(['draw_offered_by' => $request->user()->id, 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -136,6 +141,7 @@ class GameController extends Controller
         $this->authorizeGame($request, $game);
         abort_unless($game->draw_offered_by && $game->draw_offered_by !== $request->user()->id, 409, 'There is no draw offer to accept.');
         $game->update(['status' => 'draw', 'result' => '1/2-1/2', 'draw_offered_by' => null, 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -143,6 +149,7 @@ class GameController extends Controller
     {
         $this->authorizeGame($request, $game);
         $game->update(['draw_offered_by' => null, 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -151,6 +158,7 @@ class GameController extends Controller
         $this->authorizeGame($request, $game);
         abort_unless($game->moves()->exists(), 409, 'There are no moves to take back.');
         $game->update(['takeback_requested_by' => $request->user()->id, 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -164,6 +172,7 @@ class GameController extends Controller
         $state = ChessGame::fromFen($fen);
         $last->delete();
         $game->update(['fen' => $fen, 'turn' => $state->turn(), 'status' => $state->status(), 'winner' => null, 'result' => null, 'takeback_requested_by' => null, 'state_version' => $game->state_version + 1]);
+        $this->announce($game);
         return response()->json(['game' => $this->payload($game->fresh(['moves', 'white', 'black']))]);
     }
 
@@ -227,6 +236,17 @@ class GameController extends Controller
             if ($game->turn === 'w') $white = max(0, $white - $elapsed); else $black = max(0, $black - $elapsed);
         }
         return ['white' => $white, 'black' => $black, 'turn' => $game->turn, 'increment_ms' => (int) $game->increment_ms];
+    }
+
+    private function announce(Game $game): void
+    {
+        if (config('broadcasting.default') === 'reverb') {
+            try {
+                broadcast(new GameUpdated($game->id, (int) $game->state_version));
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
     }
 
     private function payload(Game $game): array
