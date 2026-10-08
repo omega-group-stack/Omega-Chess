@@ -115,5 +115,17 @@ npm run build
 ## Phase roadmap
 
 - Phase 1: local foundation, authentication, API health and board preview.
-- Phase 2: independent chess domain, FEN, legal moves and durable games.
+- Phase 2: independent chess domain, FEN, legal moves, durable practice games and server-authoritative moves.
 - Phase 3: multiplayer, matchmaking, clocks and realtime transport.
+
+## Phase 2 local game API
+
+```text
+POST /api/games
+GET  /api/games/{game}
+POST /api/games/{game}/moves
+POST /api/games/{game}/resign
+GET  /api/games/{game}/pgn
+```
+
+The `/play` screen accepts a Sanctum token and sends every move to Laravel for validation. The local Phase 2 database remains SQLite.
