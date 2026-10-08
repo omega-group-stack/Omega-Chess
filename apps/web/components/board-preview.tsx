@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -14,5 +15,5 @@ const initial: Record<string, string> = {
 
 export function BoardPreview() {
   const [selected, setSelected] = useState<string | null>(null);
-  return <div className="preview-card"><div className="preview-bar"><span>BOARD PREVIEW</span><button onClick={() => setSelected(null)} type="button">Reset</button></div><div className="chessboard">{ranks.flatMap((rank, rankIndex) => files.map((file, fileIndex) => { const square = `${file}${rank}`; const light = (rankIndex + fileIndex) % 2 === 0; return <button className={`board-square ${light ? 'light' : 'dark'} ${selected === square ? 'selected' : ''}`} key={square} onClick={() => setSelected(square)} type="button"><span className="chess-piece">{pieces[initial[square]]}</span>{file === 'a' && <span className="rank-label">{rank}</span>}{rank === 1 && <span className="file-label">{file}</span>}</button>; }))}</div><p className="board-status">{selected ? `Selected ${selected}` : 'Select a square to explore the board.'}</p></div>;
+  return <div className="preview-card"><div className="preview-bar"><span>BOARD PREVIEW</span><button onClick={() => setSelected(null)} type="button">Reset</button></div><div className="chessboard">{ranks.flatMap((rank, rankIndex) => files.map((file, fileIndex) => { const square = `${file}${rank}`; const light = (rankIndex + fileIndex) % 2 === 0; return <button className={`board-square ${light ? 'light' : 'dark'} ${selected === square ? 'selected' : ''}`} key={square} onClick={() => setSelected(square)} type="button"><span className="chess-piece">{pieces[initial[square]]}</span>{file === 'a' && <span className="rank-label">{rank}</span>}{rank === 1 && <span className="file-label">{file}</span>}</button>; }))}</div><p className="board-status">{selected ? `Selected ${selected}` : 'Preview only · select a square to explore.'}</p><Link className="preview-play-link" href="/play">Open a playable server game →</Link></div>;
 }

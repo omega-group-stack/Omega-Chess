@@ -34,7 +34,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\install.ps1
 ```
 
-The installer checks PHP, Composer and Node.js, prepares SQLite, installs all dependencies, and can start both local servers for you.
+The installer checks PHP, Composer and Node.js, prepares SQLite, installs all dependencies, and starts the local API, Reverb WebSocket server and web app for you.
 
 Start the API in PowerShell window one:
 
@@ -42,7 +42,13 @@ Start the API in PowerShell window one:
 .\setup.ps1 api
 ```
 
-Start the web app in PowerShell window two:
+Start Reverb in PowerShell window two:
+
+```powershell
+.\setup.ps1 realtime
+```
+
+Start the web app in PowerShell window three:
 
 ```powershell
 .\setup.ps1 web
@@ -114,10 +120,11 @@ npm run build
 
 ## Phase roadmap
 
-- Phase 1: local foundation, authentication, API health and board preview.
-- Phase 2: independent chess domain, FEN, legal moves, durable practice games and server-authoritative moves.
-- Phase 3: lobby, matchmaking foundation, clocks, draw/takeback/rematch and polling reconnect.
-- Phase 4: production realtime transport, WebSocket, Redis Pub/Sub, rate limiting and monitoring.
+- Phase 1: local foundation, authentication, API health and board preview. ✅
+- Phase 2: independent chess domain, FEN, legal moves, durable practice games and server-authoritative moves. ✅
+- Phase 3: lobby, matchmaking foundation, clocks, draw/takeback/rematch and polling reconnect. ✅
+- Phase 4: local WebSocket transport with Laravel Reverb, Echo and polling fallback. ✅
+- Optional production hardening: SSL/WSS, Redis scaling, queues, rate limiting and monitoring.
 
 ## Phase 2 local game API
 
