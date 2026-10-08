@@ -116,7 +116,8 @@ npm run build
 
 - Phase 1: local foundation, authentication, API health and board preview.
 - Phase 2: independent chess domain, FEN, legal moves, durable practice games and server-authoritative moves.
-- Phase 3: multiplayer, matchmaking, clocks and realtime transport.
+- Phase 3: lobby, matchmaking foundation, clocks, draw/takeback/rematch and polling reconnect.
+- Phase 4: production realtime transport, WebSocket, Redis Pub/Sub, rate limiting and monitoring.
 
 ## Phase 2 local game API
 
@@ -129,3 +130,5 @@ GET  /api/games/{game}/pgn
 ```
 
 The `/play` screen accepts a Sanctum token and sends every move to Laravel for validation. The local Phase 2 database remains SQLite.
+
+Phase 3 guide: [`docs/PHASE-3-LIVE.fa.md`](docs/PHASE-3-LIVE.fa.md).

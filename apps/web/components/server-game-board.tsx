@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '../lib/api';
 
 type Move = { from: string; to: string; san: string; ply: number };
-type Game = { id: string; status: string; turn: 'w' | 'b'; result: string | null; fen: string; state: { legal_moves: Record<string, string[]> }; moves: Move[] };
+type Game = { id: string; status: string; turn: 'w' | 'b'; result: string | null; fen: string; version?: number; clock?: { white: number | null; black: number | null; turn: 'w' | 'b'; increment_ms: number }; draw_offered_by?: number | null; state: { legal_moves: Record<string, string[]> }; moves: Move[] };
 
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
@@ -30,6 +30,17 @@ export function ServerGameBoard() {
   const [loading, setLoading] = useState(false);
   useEffect(() => setToken(window.localStorage.getItem('omega_token') || ''), []);
   useEffect(() => { if (token) window.localStorage.setItem('omega_token', token); }, [token]);
+  useEffect(() => {
+    if (!game || !token) return;
+    const timer = window.setInterval(async () => {
+      const response = await fetch(apiUrl(`/games/${game.id}/events?since=${game.version ?? -1}`), { headers: { Authorization: `Bearer ${token}` } });
+      if (response.ok) {
+        const payload = await response.json();
+        if (payload.changed) setGame(payload.game);
+      }
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [game?.id, game?.version, token]);
   const board = useMemo(() => boardFromFen(game?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'), [game?.fen]);
   const legalTargets = selected && game ? game.state.legal_moves[selected] || [] : [];
 
@@ -43,6 +54,19 @@ export function ServerGameBoard() {
       setGame(payload.game); setSelected(null); setMessage('Game created. Select a piece to make a legal server-checked move.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not create a game.'); }
     finally { setLoading(false); }
+  }
+
+  async function action(path: string) {
+    if (!game || !token) return;
+    const response = await fetch(apiUrl(`/games/${game.id}/${path}`), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const payload = await response.json();
+    if (!response.ok) { setMessage(payload.message || 'The server rejected this action.'); return; }
+    setGame(payload.game);
+  }
+
+  function clockLabel(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '—';
+    return `${Math.floor(value / 60000)}:${String(Math.floor((value % 60000) / 1000)).padStart(2, '0')}`;
   }
 
   async function choose(square: string) {
@@ -64,5 +88,5 @@ export function ServerGameBoard() {
     finally { setLoading(false); }
   }
 
-  return <section className="server-game-shell page-width"><div className="server-game-copy"><p className="eyebrow">PHASE 2 · SERVER AUTHORITY</p><h1>A real game state, not a mock board.</h1><p>Every move is validated by Laravel and persisted in SQLite locally. This is the first server-authoritative game slice.</p><div className="token-row"><label htmlFor="token">Sanctum token</label><input id="token" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste token from /api/auth/login" type="password" /></div><button className="primary-button" disabled={loading} onClick={createGame} type="button">{loading ? 'Working…' : game ? 'Create another game' : 'Create server game'} <span>→</span></button><p className="server-message" role="status">{message}</p></div><div className="server-board-card"><div className="server-game-bar"><span>{game ? `Game ${game.id.slice(0, 8)}` : 'No game created'}</span><b>{game ? game.status : 'ready'}</b></div><div className="chessboard">{ranks.flatMap((rank, rankIndex) => files.map((file, fileIndex) => { const square = `${file}${rank}`; const piece = board[square]; const light = (rankIndex + fileIndex) % 2 === 0; return <button className={`board-square ${light ? 'light' : 'dark'} ${selected === square ? 'selected' : ''} ${legalTargets.includes(square) ? 'legal-target' : ''}`} key={square} onClick={() => choose(square)} type="button"><span className="chess-piece">{pieces[piece]}</span>{file === 'a' && <span className="rank-label">{rank}</span>}{rank === 1 && <span className="file-label">{file}</span>}</button>; }))}</div><div className="move-strip">{game?.moves.length ? game.moves.map((move) => <span key={move.ply}>{move.san}</span>) : <span>No moves yet</span>}</div></div></section>;
+  return <section className="server-game-shell page-width"><div className="server-game-copy"><p className="eyebrow">PHASE 3 · LIVE PLAY FOUNDATION</p><h1>A real game state, not a mock board.</h1><p>Every move is validated by Laravel and persisted in SQLite locally. This is the first server-authoritative game slice.</p><div className="token-row"><label htmlFor="token">Sanctum token</label><input id="token" value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste token from /api/auth/login" type="password" /></div><button className="primary-button" disabled={loading} onClick={createGame} type="button">{loading ? 'Working…' : game ? 'Create another game' : 'Create server game'} <span>→</span></button><p className="server-message" role="status">{message}</p></div><div className="server-board-card"><div className="server-game-bar"><span>{game ? `Game ${game.id.slice(0, 8)}` : 'No game created'}</span><b>{game ? game.status : 'ready'}</b></div>{game?.clock && <div className="clock-row"><span className={game.turn === 'w' ? 'clock-active' : ''}>White {clockLabel(game.clock.white)}</span><span className={game.turn === 'b' ? 'clock-active' : ''}>Black {clockLabel(game.clock.black)}</span></div>}<div className="chessboard">{ranks.flatMap((rank, rankIndex) => files.map((file, fileIndex) => { const square = `${file}${rank}`; const piece = board[square]; const light = (rankIndex + fileIndex) % 2 === 0; return <button className={`board-square ${light ? 'light' : 'dark'} ${selected === square ? 'selected' : ''} ${legalTargets.includes(square) ? 'legal-target' : ''}`} key={square} onClick={() => choose(square)} type="button"><span className="chess-piece">{pieces[piece]}</span>{file === 'a' && <span className="rank-label">{rank}</span>}{rank === 1 && <span className="file-label">{file}</span>}</button>; }))}</div><div className="move-strip">{game?.moves.length ? game.moves.map((move) => <span key={move.ply}>{move.san}</span>) : <span>No moves yet</span>}</div>{game && <div className="game-actions"><button type="button" onClick={() => action('draw/offer')}>Offer draw</button><button type="button" onClick={() => action('takeback/request')}>Request takeback</button><button type="button" onClick={() => action('resign')}>Resign</button></div>}</div></section>;
 }
